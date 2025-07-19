@@ -10,26 +10,26 @@ if ! git diff-index --quiet HEAD --; then
     exit 1
 fi
 
-# Check if pre-commit is installed
-if ! command -v pre-commit &> /dev/null; then
-    echo "Warning: pre-commit is not installed. Consider running 'pip install pre-commit && pre-commit install'."
+# Check if pre-commit is installed (using uv run)
+if ! uv run pre-commit --version &> /dev/null; then
+    echo "Warning: pre-commit is not installed. Consider running 'uv sync --extra dev && uv run pre-commit install'."
 fi
 
-# Check if commitizen is installed
-if ! command -v cz &> /dev/null; then
-    echo "Error: commitizen is not installed. Please run 'uv sync --extra dev' or 'pip install commitizen'."
+# Check if commitizen is installed (using uv run)
+if ! uv run cz --version &> /dev/null; then
+    echo "Error: commitizen is not installed. Please run 'uv sync --extra dev'."
     exit 1
 fi
 
 echo "Starting the release process."
 
-# Run 'cz bump'. This will:
+# Run 'cz bump' using uv run. This will:
 # 1. Determine the new version number.
 # 2. Update pyproject.toml and CHANGELOG.md.
 # 3. Create a new commit (e.g., 'chore(release): v1.2.3').
 # 4. Create a new git tag (e.g., 'v1.2.3').
 # We are intentionally not using --yes to allow for a final review.
-cz bump
+uv run cz bump
 
 # Get the current branch name dynamically
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
