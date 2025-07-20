@@ -13,7 +13,7 @@ license = {file = "LICENSE"}
 authors = [
     {name = "Filming"}
 ]
-keywords = ["python", "python3"]
+keywords = ["python", "async", "web-scraping", "lyrics", "music", "azlyrics", "database", "discography", "artist-data"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
