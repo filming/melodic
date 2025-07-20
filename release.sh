@@ -16,7 +16,7 @@ if ! uv run pre-commit --version &> /dev/null; then
 fi
 
 # Check if commitizen is installed (using uv run)
-if ! uv run cz --version &> /dev/null; then
+if ! uv run cz version &> /dev/null; then
     echo "Error: commitizen is not installed. Please run 'uv sync --extra dev'."
     exit 1
 fi
