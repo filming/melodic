@@ -1,7 +1,17 @@
-"""Define the custom exceptions for Melodic."""
+"""Custom exceptions for the Melodic library."""
 
 
 class MelodicError(Exception):
-    """Base exception for the Melodic library."""
+    """A base exception for all library-specific errors."""
 
-    pass
+
+class MelodicConfigError(MelodicError):
+    """An exception for configuration-related errors."""
+
+
+class MelodicDatabaseError(MelodicError):
+    """An exception for general database errors."""
+
+
+class MelodicConnectionError(MelodicDatabaseError):
+    """An exception for database connection-specific errors."""
