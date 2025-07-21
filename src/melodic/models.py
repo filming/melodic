@@ -1,11 +1,11 @@
-"""Define data models for tracks, albums and artists in Melodic."""
+"""Dataclasses for representing lyrical data."""
 
 from dataclasses import dataclass, field
 
 
 @dataclass
 class Track:
-    """Represents a music track with title, URL, and optional lyrics."""
+    """A music track."""
 
     title: str
     url: str
@@ -14,7 +14,7 @@ class Track:
 
 @dataclass
 class Album:
-    """Represents a music album containing multiple tracks."""
+    """An album, containing a list of tracks."""
 
     title: str
     tracks: list[Track] = field(default_factory=list)
@@ -22,7 +22,7 @@ class Album:
 
 @dataclass
 class Artist:
-    """Represents a music artist with their discography."""
+    """An artist, containing their name, URL, and albums."""
 
     name: str
     url: str
