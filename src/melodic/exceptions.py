@@ -7,3 +7,11 @@ class MelodicError(Exception):
 
 class MelodicConfigError(MelodicError):
     """An exception for configuration related errors."""
+
+
+class MelodicDatabaseError(MelodicError):
+    """An exception for general database errors."""
+
+
+class MelodicDatabaseConnectionError(MelodicDatabaseError):
+    """An exception for database connection specific errors."""
