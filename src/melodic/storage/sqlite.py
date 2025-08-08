@@ -6,11 +6,10 @@ from pathlib import Path
 
 import aiosqlite
 
-from ..exceptions import MelodicDatabaseError, MelodicDatabaseConnectionError
+from ..exceptions import MelodicDatabaseConnectionError, MelodicDatabaseError
 from ..models import Album, Artist, Track
 from . import schema
 from .base import BaseStorage
-
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +22,7 @@ class SQLiteStorage(BaseStorage):
 
         Args:
             db_path: The file path for the SQLite database.
+
         """
         self._db_path = db_path
         self._conn: aiosqlite.Connection | None = None
@@ -32,6 +32,7 @@ class SQLiteStorage(BaseStorage):
 
         Raises:
             MelodicDatabaseConnectionError: If the connection to the database fails.
+
         """
         if self._conn:
             return
@@ -67,6 +68,7 @@ class SQLiteStorage(BaseStorage):
             MelodicDatabaseConnectionError: If there is no active database
                 connection.
             MelodicDatabaseError: If the database insertion fails.
+
         """
         if not self._conn:
             raise MelodicDatabaseConnectionError("No active database connection")
@@ -109,6 +111,7 @@ class SQLiteStorage(BaseStorage):
         Raises:
             MelodicDatabaseError: If the artist ID cannot be retrieved after
                 insertion.
+
         """
         await cursor.execute(
             "INSERT OR IGNORE INTO artists (name, url) VALUES (?, ?)",
@@ -134,6 +137,7 @@ class SQLiteStorage(BaseStorage):
             cursor: The database cursor for the transaction.
             artist_id: The ID of the artist.
             albums: A list of albums to insert.
+
         """
         for album in albums:
             album_id = await self._insert_album_record(cursor, artist_id, album)
@@ -155,6 +159,7 @@ class SQLiteStorage(BaseStorage):
         Raises:
             MelodicDatabaseError: If the album ID cannot be retrieved after
                 insertion.
+
         """
         await cursor.execute(
             "INSERT OR IGNORE INTO albums (artist_id, title) VALUES (?, ?)",
@@ -183,6 +188,7 @@ class SQLiteStorage(BaseStorage):
             cursor: The database cursor for the transaction.
             album_id: The ID of the album for these tracks.
             tracks: A list of tracks to insert.
+
         """
         for track in tracks:
             await cursor.execute(
