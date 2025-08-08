@@ -2,6 +2,18 @@
 
 All notable changes to **melodic** will be documented in this file.
 
+## v2.1.0 (2025-08-08)
+
+### Added
+
+- add SQLiteStorage implementation
+- add schema for initialize database tables
+- add abstract interface for storage implementations
+- add SQLiteStorage public api
+- add custom exceptions for storage operations
+- implement storage handling in main client
+- add storage public apis
+
 ## v2.0.0 (2025-08-08)
 
 ### Added
