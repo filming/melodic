@@ -4,7 +4,10 @@ import logging
 import types
 from pathlib import Path
 
+from platformdirs import user_data_path
+
 from .exceptions import MelodicConfigError
+from .storage import SQLiteStorage
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -34,8 +37,25 @@ class Melodic:
 
         """
         # Storage configuration
+        self._storage: SQLiteStorage | None = None
         if enable_storage:
-            pass
+            db_path: Path
+
+            if storage_path:
+                path_obj = Path(storage_path)
+
+                if path_obj.is_dir():
+                    raise MelodicConfigError(
+                        f"The provided storage_path '{storage_path}' is a directory. "
+                        "Please provide a full file path (e.g., 'path/to/lyrics.db')."
+                    )
+                db_path = path_obj
+            else:
+                db_path = user_data_path("melodic", "melodic") / "lyrics.db"
+
+            # Ensure the parent directory exists before trying to connect
+            db_path.parent.mkdir(parents=True, exist_ok=True)
+            self._storage = SQLiteStorage(db_path)
 
         elif storage_path:
             raise MelodicConfigError(
@@ -43,11 +63,14 @@ class Melodic:
                 "Set enable_storage=True to use a custom storage path."
             )
 
+        self._proxies = proxies
         logger.info("Melodic instance has been initialized.")
 
     async def __aenter__(self) -> "Melodic":
         """Enter the async context manager and initialize resources."""
         logger.debug("Melodic context entered.")
+        if self._storage:
+            await self._storage.initialize()
         return self
 
     async def __aexit__(
@@ -57,6 +80,8 @@ class Melodic:
         traceback: types.TracebackType | None,
     ) -> None:
         """Exit the async context manager and close resources."""
+        if self._storage:
+            await self._storage.close()
         logger.debug("Melodic context exited.")
 
     async def get_discography(self, artist_name: str) -> None:
