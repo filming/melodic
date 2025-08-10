@@ -9,8 +9,11 @@ description = "A Python client for fetching artist lyrical discographies."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "aiohttp>=3.12.15",
+    "aiohttp-socks>=0.10.1",
     "aiosqlite>=0.21.0",
-    "platformdirs>=4.3.8",
+    "beautifulsoup4>=4.13.4",
+    "lxml>=6.0.0",
 ]
 license = {file = "LICENSE"}
 authors = [
