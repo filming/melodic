@@ -2,20 +2,25 @@
 
 from .client import Melodic
 from .exceptions import (
+    ArtistNotFoundError,
+    DiscographyNotFoundError,
+    LyricsNotFoundError,
     MelodicConfigError,
-    MelodicDatabaseConnectionError,
-    MelodicDatabaseError,
     MelodicError,
+    NetworkError,
+    SessionNotStartedError,
 )
-from .models import Album, Artist, Track
+from .models import Song, SongInfo
 
 __all__ = [
     "Melodic",
-    "Artist",
-    "Album",
-    "Track",
     "MelodicError",
     "MelodicConfigError",
-    "MelodicDatabaseError",
-    "MelodicDatabaseConnectionError",
+    "SessionNotStartedError",
+    "NetworkError",
+    "ArtistNotFoundError",
+    "LyricsNotFoundError",
+    "DiscographyNotFoundError",
+    "Song",
+    "SongInfo",
 ]

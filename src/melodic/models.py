@@ -1,29 +1,24 @@
-"""Dataclasses for representing music data."""
+"""Dataclasses for representing song data."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
-@dataclass
-class Track:
-    """A music track."""
+@dataclass(frozen=True)
+class SongInfo:
+    """A temporary object holding a song's URL and metadata."""
 
+    artist: str
+    album: str
     title: str
     url: str
-    lyrics: str | None = None
 
 
-@dataclass
-class Album:
-    """An album, containing a list of tracks."""
+@dataclass(frozen=True)
+class Song:
+    """The final representation of a song, including its lyrics."""
 
+    artist: str
+    album: str
     title: str
-    tracks: list[Track] = field(default_factory=list)
-
-
-@dataclass
-class Artist:
-    """An artist, containing their name, URL, and albums."""
-
-    name: str
+    lyrics: str
     url: str
-    albums: list[Album] = field(default_factory=list)
