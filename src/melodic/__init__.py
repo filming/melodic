@@ -10,10 +10,11 @@ from melodic.exceptions import (
     NetworkError,
     SessionNotStartedError,
 )
-from melodic.models import Song, SongInfo
+from melodic.models import ClientConfig, Song, SongInfo
 
 __all__ = [
     "Melodic",
+    "ClientConfig",
     "MelodicError",
     "MelodicConfigError",
     "SessionNotStartedError",
