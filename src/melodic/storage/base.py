@@ -2,10 +2,10 @@
 
 from abc import ABC, abstractmethod
 
-from ..models import Artist
+from melodic.models import Song
 
 
-class BaseStorage(ABC):
+class StorageBase(ABC):
     """Define the abstract interface for storage implementations."""
 
     @abstractmethod
@@ -19,6 +19,6 @@ class BaseStorage(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def save_artist(self, artist: Artist) -> None:
-        """Save a complete artist object to storage."""
+    async def save_songs(self, songs: list[Song]) -> None:
+        """Save a list of songs to the storage."""
         raise NotImplementedError
