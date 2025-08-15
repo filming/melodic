@@ -1,7 +1,7 @@
 """A Python client for fetching artist lyrical discographies."""
 
-from .client import Melodic
-from .exceptions import (
+from melodic.client import Melodic
+from melodic.exceptions import (
     ArtistNotFoundError,
     DiscographyNotFoundError,
     LyricsNotFoundError,
@@ -10,7 +10,7 @@ from .exceptions import (
     NetworkError,
     SessionNotStartedError,
 )
-from .models import Song, SongInfo
+from melodic.models import Song, SongInfo
 
 __all__ = [
     "Melodic",
