@@ -2,6 +2,25 @@
 
 All notable changes to **melodic** will be documented in this file.
 
+## v2.2.0 (2025-08-15)
+
+### Added
+
+- implement full fetching logic & update public api
+- add core networking logic
+- minimize http status magic numbers
+- add client config model dataclass for cleaner setup
+- refactor public api import format
+- add artist and song parsing methods
+- improve exceptions, song models and public api
+
+### Changed
+
+- optimize the storing of song data
+- improve initialization schema
+- improve base interface implementations
+- reduce default headers to user agent
+
 ## v2.1.0 (2025-08-08)
 
 ### Added
