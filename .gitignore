@@ -39,6 +39,7 @@ local_settings.py
 # Personal Development & Local Ignores
 playground/
 release.sh
+Makefile
 
 # OS-specific files
 .DS_Store
