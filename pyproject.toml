@@ -8,7 +8,10 @@ version = "2.2.0"
 description = "An asynchronous client for fetching lyrical discographies of music artists."
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "aiohttp>=3.12.15",
+    "aiohttp-socks>=0.10.1",
+]
 license = {file = "LICENSE"}
 authors = [
     {name = "Filming"}
@@ -37,8 +40,29 @@ target-version = "py310"
 src = ["src"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP", "PL", "B", "SIM", "C90", "D"]
-ignore = ["D100", "D104", "D203", "D213", "D413"]
+# Select rule categories to check
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "W",    # pycodestyle warnings
+    "I",    # isort
+    "UP",   # pyupgrade
+    "PL",   # pylint
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "C90",  # mccabe complexity
+    "D",    # pydocstring
+]
+
+# Ignore specific rules
+ignore = [
+    "D100",    # Missing docstring in public module
+    "D104",    # Missing docstring in public package
+    "D203",    # 1 blank line required before class docstring
+    "D213",    # Multi-line docstring summary should start at the second line
+    "D413",    # Missing blank line after last section
+    "PLR0913", # Too many arguments in function definition (>5)
+]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
