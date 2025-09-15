@@ -164,7 +164,7 @@ class Melodic:
                         track_info.track_title,
                         track_info.url,
                         i + 1,
-                        3,
+                        self._max_retry_attempts,
                     )
                 return Track(
                     artist_name=artist_name,
@@ -179,7 +179,7 @@ class Melodic:
                     track_info.track_title,
                     e,
                     i + 1,
-                    3,
+                    self._max_retry_attempts,
                 )
 
         return None
