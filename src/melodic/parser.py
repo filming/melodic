@@ -1,8 +1,12 @@
 import re
 import unicodedata
 
+from bs4 import BeautifulSoup
+from bs4.element import Tag
+
 from .constants import BASE_URL
-from .exceptions import MelodicError
+from .exceptions import DiscographyNotFoundError, MelodicError
+from .models import TrackInfo
 
 
 def get_artist_url(artist_name: str) -> str:
@@ -47,8 +51,79 @@ def _clean_artist_name(name: str) -> str:
     cleaned = re.sub(r"[^a-z0-9]", "", substituted_name.lower())
 
     if not cleaned:
-        raise MelodicError(
-            f"Cleaning artist name '{name}' resulted in an empty string."
-        )
+        raise MelodicError(f"Cleaning artist name: {name} resulted in an empty string.")
 
     return cleaned
+
+
+def parse_artist_page(page_html: str) -> tuple[str, list[TrackInfo]]:
+    """Parse an artist's page html to find discography metadata.
+
+    Args:
+        page_html: The HTML content of the artist's discography page.
+
+    Returns:
+        The confirmed name of the artist name and a list containing TrackInfo
+            objects.
+
+    Raises:
+        DiscographyNotFoundError: If no track metadata could be found on the
+            given page html.
+    """
+    track_infos = []
+
+    soup = BeautifulSoup(page_html, "lxml")
+
+    # Extract artist name
+    artist_name_tag = soup.find("h1")
+    artist_name = (
+        artist_name_tag.text.replace(" Lyrics", "").strip()
+        if artist_name_tag and isinstance(artist_name_tag, Tag)
+        else "Unknown Artist"
+    )
+
+    # Find all track metadatas
+    album_title = "N/A"
+
+    for element in soup.select("div#listAlbum > *"):
+        if not isinstance(element, Tag):
+            continue
+
+        # Album names are in divs with class "album"
+        class_attr = element.get("class")
+        classes = class_attr if isinstance(class_attr, list) else []
+
+        if element.name == "div" and "album" in classes:
+            album_title_tag = element.find("b")
+            if album_title_tag:
+                album_title = album_title_tag.text.strip().strip('"')
+            else:
+                album_title = "other songs"
+
+        # Song links are either <a> tags or inside divs with class "listalbum-item"
+        elif element.name == "a" or (
+            element.name == "div" and "listalbum-item" in classes
+        ):
+            anchor = element if element.name == "a" else element.find("a")
+            if not anchor or not isinstance(anchor, Tag):
+                continue
+
+            href = anchor.get("href")
+            if not href or not isinstance(href, str) or not href.startswith("/lyrics"):
+                continue
+
+            track_url = f"{BASE_URL}{href.removeprefix('../')}"
+            track_title = anchor.text.strip()
+            track_infos.append(
+                TrackInfo(
+                    artist_name=artist_name,
+                    album_title=album_title,
+                    track_title=track_title,
+                    url=track_url,
+                )
+            )
+
+    if not track_infos:
+        raise DiscographyNotFoundError(f"No songs found for: {artist_name}")
+
+    return artist_name, track_infos

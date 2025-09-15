@@ -28,6 +28,10 @@ class ArtistNotFoundError(NetworkError):
     """Raise when an artist's page returns a 404 Not Found error."""
 
 
+class DiscographyNotFoundError(MelodicError):
+    """Raise when an artist's discography page contains no track metadata."""
+
+
 class IPBlockedError(NetworkError):
     """Raise when an IP has been blocked by the target website."""
 

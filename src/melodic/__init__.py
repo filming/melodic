@@ -2,6 +2,7 @@ from .client import Melodic
 from .exceptions import (
     ArtistNotFoundError,
     ConfigError,
+    DiscographyNotFoundError,
     IPBlockedError,
     MelodicError,
     SessionNotStartedError,
@@ -14,6 +15,7 @@ __all__ = [
     "ConfigError",
     "SessionNotStartedError",
     "ArtistNotFoundError",
+    "DiscographyNotFoundError",
     "IPBlockedError",
     "StorageError",
 ]
