@@ -2,6 +2,37 @@
 
 All notable changes to **melodic** will be documented in this file.
 
+## v3.0.0 (2025-09-15)
+
+### Added
+
+- implement system to retry failed fetch attempts
+- implement complete get_discography method
+- add track page parsing for lyrics
+- add artist page parsing for track-infos
+- add artist url construction method
+- add save_tracks method to storage manager class
+- implement basic storage manager methods
+- improve init method and async contexts
+- add revised network manager
+- add forbidden to http status constants
+- update project public api
+- add network specific custom errors
+- add constant project vars
+- add track representation models
+- implement base of project re-structure
+
+### Changed
+
+- normalize 'other songs' category into a system category
+- change cooldown retry waiting period to 1s over 0.5s
+- improve network manager logic and structure
+- set default max concurrent requests to 10
+
+### Fixed
+
+- inaccurate retry attempts being displayed
+
 ## v2.2.0 (2025-08-15)
 
 ### Added
