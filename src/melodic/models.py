@@ -1,14 +1,22 @@
 from dataclasses import dataclass
-from pathlib import Path
 
 
-@dataclass
-class ClientConfig:
-    """Configuration settings for the Melodic client."""
+@dataclass(frozen=True)
+class TrackInfo:
+    """A temporary object holding a track's metadata."""
 
-    storage_path: str | Path | None = None
-    proxies: list[str] | None = None
-    max_concurrent_requests: int = 10
-    request_delay: float = 3.5
-    user_agent: str | None = None
-    batch_save_size: int = 20
+    artist_name: str
+    album_title: str
+    track_title: str
+    url: str
+
+
+@dataclass(frozen=True)
+class Track:
+    """The final representation of a track, including its lyrics."""
+
+    artist_name: str
+    album_title: str
+    track_title: str
+    lyrics: str
+    url: str
