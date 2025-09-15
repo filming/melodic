@@ -127,3 +127,25 @@ def parse_artist_page(page_html: str) -> tuple[str, list[TrackInfo]]:
         raise DiscographyNotFoundError(f"No songs found for: {artist_name}")
 
     return artist_name, track_infos
+
+
+def parse_track_page(page_html: str) -> str:
+    """Parse the track's page html to extract its lyrics.
+
+    Args:
+        page_html: The HTML content of the track's page.
+
+    Returns:
+        The lyrics of the associated track.
+    """
+    soup = BeautifulSoup(page_html, "lxml")
+
+    ringtone_div = soup.find("div", class_="ringtone")
+    if not ringtone_div or not isinstance(ringtone_div, Tag):
+        return ""
+
+    lyrics_div = ringtone_div.find_next("div")
+    if lyrics_div and isinstance(lyrics_div, Tag):
+        return lyrics_div.get_text(separator="\n", strip=True)
+
+    return ""
