@@ -4,6 +4,7 @@ from pathlib import Path
 import aiosqlite
 
 from .exceptions import StorageError
+from .models import Track
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,8 @@ class StorageManager:
         """Open a database connection and configure attributes if required.
 
         Raises:
-            StorageError: If the database file is not found or accessible.
+            StorageError: If the database connection could not be opened or
+                the database could not be initialized.
         """
         if not self._connection:
             try:
@@ -64,3 +66,43 @@ class StorageManager:
             await self._connection.close()
             self._connection = None
             logger.debug("Database connection closed.")
+
+    async def save_tracks(self, tracks: list[Track]) -> None:
+        """Save a list of tracks to the database in a single transaction.
+
+        Args:
+            tracks: A list of Track objects to be saved.
+
+        Raises:
+            StorageError: If the database connection wasn't established or
+                if there was an issue saving tracks to the database.
+        """
+        if not self._connection:
+            raise StorageError("Database connection has not been opened.")
+
+        if not tracks:
+            return
+
+        sql = (
+            "INSERT OR IGNORE INTO tracks "
+            "(artist_name, album_title, track_title, lyrics, url) "
+            "VALUES (?, ?, ?, ?, ?)"
+        )
+        data_to_insert = [
+            (
+                track.artist_name,
+                track.album_title,
+                track.track_title,
+                track.lyrics,
+                track.url,
+            )
+            for track in tracks
+        ]
+
+        try:
+            await self._connection.executemany(sql, data_to_insert)
+            await self._connection.commit()
+            logger.info("Attempted to save %d tracks to the database.", len(tracks))
+
+        except (aiosqlite.Error, OSError) as e:
+            raise StorageError(f"Failed to save tracks to database: {e}") from e
