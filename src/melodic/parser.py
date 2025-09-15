@@ -95,10 +95,15 @@ def parse_artist_page(page_html: str) -> tuple[str, list[TrackInfo]]:
 
         if element.name == "div" and "album" in classes:
             album_title_tag = element.find("b")
+
             if album_title_tag:
                 album_title = album_title_tag.text.strip().strip('"')
+
+                # Normalize "other songs" variations to our default
+                if album_title.lower().rstrip(":").strip() == "other songs":
+                    album_title = "[Other]"
             else:
-                album_title = "other songs"
+                album_title = "[Other]"
 
         # Song links are either <a> tags or inside divs with class "listalbum-item"
         elif element.name == "a" or (
