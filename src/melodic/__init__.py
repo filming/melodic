@@ -1,5 +1,17 @@
 from .client import Melodic
-from .exceptions import ConfigError, MelodicError
-from .models import ClientConfig
+from .exceptions import (
+    ArtistNotFoundError,
+    ConfigError,
+    IPBlockedError,
+    MelodicError,
+    SessionNotStartedError,
+)
 
-__all__ = ["Melodic", "ClientConfig", "MelodicError", "ConfigError"]
+__all__ = [
+    "Melodic",
+    "MelodicError",
+    "ConfigError",
+    "SessionNotStartedError",
+    "ArtistNotFoundError",
+    "IPBlockedError",
+]
