@@ -121,7 +121,7 @@ Configuration is managed through the `ClientConfig` dataclass, which is passed t
 - **`proxies`**: `list[str] | None` (Default: `None`)
   - A list of proxy strings (e.g., `["http://user:pass@host:port"]`). If provided, all network requests will be rotated through these proxies.
 
-- **`max_concurrent_requests`**: `int` (Default: `1`)
+- **`max_concurrent_requests`**: `int` (Default: `10`)
   - The maximum number of concurrent `aiohttp` requests to make at one time.
 
 - **`request_delay`**: `float` (Default: `3.5`)
