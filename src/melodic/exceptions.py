@@ -30,3 +30,7 @@ class ArtistNotFoundError(NetworkError):
 
 class IPBlockedError(NetworkError):
     """Raise when an IP has been blocked by the target website."""
+
+
+class StorageError(MelodicError):
+    """Raise for storage related errors."""

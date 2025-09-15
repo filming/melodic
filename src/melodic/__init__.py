@@ -5,6 +5,7 @@ from .exceptions import (
     IPBlockedError,
     MelodicError,
     SessionNotStartedError,
+    StorageError,
 )
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "SessionNotStartedError",
     "ArtistNotFoundError",
     "IPBlockedError",
+    "StorageError",
 ]

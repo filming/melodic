@@ -3,6 +3,7 @@ import types
 from pathlib import Path
 
 from .network import NetworkManager
+from .storage import StorageManager
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -38,6 +39,7 @@ class Melodic:
             request_delay=request_delay,
             user_agent=user_agent,
         )
+        self._storage_manager = StorageManager(storage_path) if storage_path else None
         self._batch_save_size = batch_save_size
         self._in_context = False
 
@@ -50,6 +52,9 @@ class Melodic:
             The initialized Melodic instance.
         """
         await self._network_manager.start()
+        if self._storage_manager:
+            await self._storage_manager.start()
+
         self._in_context = True
         logger.debug("Melodic context entered.")
         return self
@@ -62,5 +67,8 @@ class Melodic:
     ) -> None:
         """Exit async context and close resources."""
         await self._network_manager.stop()
+        if self._storage_manager:
+            await self._storage_manager.stop()
+
         self._in_context = False
         logger.debug("Melodic context exited.")
