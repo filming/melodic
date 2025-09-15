@@ -1,6 +1,5 @@
 from .client import Melodic
 from .exceptions import (
-    ArtistNotFoundError,
     ConfigError,
     DiscographyNotFoundError,
     IPBlockedError,

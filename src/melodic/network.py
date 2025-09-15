@@ -9,7 +9,6 @@ from bs4 import BeautifulSoup
 
 from .constants import DEFAULT_USER_AGENT, HTTP_STATUSES
 from .exceptions import (
-    ArtistNotFoundError,
     ConfigError,
     IPBlockedError,
     NetworkError,
@@ -49,15 +48,15 @@ class NetworkManager:
             for proxy in proxies:
                 if not proxy.startswith(VALID_PROXY_SCHEMES):
                     raise ConfigError(
-                        f"Invalid proxy format: '{proxy}'. "
+                        f"Invalid proxy format, {proxy}. "
                         f"Proxy must start with one of {VALID_PROXY_SCHEMES}."
                     )
 
         # State for managing statuses of proxies
-        self._proxy_cooldowns: dict[str | None, float] = (
-            {p: 0.0 for p in proxies} if proxies else {None: 0.0}
+        self._proxy_cooldowns: dict[str, float] = (
+            {p: 0.0 for p in proxies} if proxies else {"Local-IP": 0.0}
         )
-        self._dead_proxies: set[str | None] = set()
+        self._dead_proxies: set[str] = set()
         self._proxy_lock = asyncio.Lock()
 
         # Determine concurrency limit
@@ -70,20 +69,20 @@ class NetworkManager:
 
     async def start(self) -> None:
         """Initialize the aiohttp session."""
-        if not self._session or self._session.closed:
+        if not self._session:
             self._session = aiohttp.ClientSession(
                 headers={"User-Agent": self._user_agent}
             )
-        logger.debug("NetworkManager started.")
+        logger.debug("NetworkManager has been started.")
 
     async def stop(self) -> None:
         """Close the aiohttp session."""
-        if self._session and not self._session.closed:
+        if self._session:
             await self._session.close()
             self._session = None
-        logger.debug("NetworkManager stopped.")
+        logger.debug("NetworkManager has been stopped.")
 
-    async def _get_available_proxy(self) -> str | None:
+    async def _get_available_proxy(self) -> str:
         """Select a proxy that is not on cooldown or marked as dead.
 
         Returns:
@@ -94,6 +93,7 @@ class NetworkManager:
         """
         async with self._proxy_lock:
             while True:
+                # Get all available proxies based on when they were last used
                 now = time.monotonic()
 
                 available_proxies = [
@@ -127,86 +127,93 @@ class NetworkManager:
 
         Raises:
             SessionNotStartedError: If the network session is not active.
-            NetworkError: If the request fails after all retries.
-            ArtistNotFoundError: If a 404 status is received.
-            IPBlockedError: If an IP has been blocked on the target website.
         """
         if not self._session:
-            raise SessionNotStartedError("Network session not started.")
+            raise SessionNotStartedError("Network session was not started.")
 
         async with self._semaphore:
             proxy_url = await self._get_available_proxy()
-            logger.debug(
-                "Requesting URL '%s' via proxy '%s'", url, proxy_url or "Local IP"
-            )
 
-            try:
-                # No proxy or an HTTP/HTTPS proxy. Use the main session.
-                if not proxy_url or proxy_url.startswith("http"):
-                    async with self._session.get(
-                        url, proxy=proxy_url, timeout=self._timeout
-                    ) as response:
-                        response.raise_for_status()
+            logger.debug("Requested URL %s via %s", url, proxy_url)
 
-                        page_html = await response.text()
-                        page_validity = self._validate_page_access(page_html)
-
-                        if not page_validity:
-                            raise IPBlockedError(
-                                f"""IP '{proxy_url or "Local IP"}' """
-                                f"""has been blocked for URL '{url}'"""
-                            )
-                        return page_html
-
-                # A new session with a SOCKS connector is required.
-                else:
-                    connector = ProxyConnector.from_url(proxy_url)
-                    async with (
-                        aiohttp.ClientSession(
-                            connector=connector, headers=self._session.headers
-                        ) as session,
-                        session.get(url, timeout=self._timeout) as response,
-                    ):
-                        response.raise_for_status()
-
-                        page_html = await response.text()
-                        page_validity = self._validate_page_access(page_html)
-
-                        if not page_validity:
-                            raise IPBlockedError(
-                                f"""IP '{proxy_url or "Local IP"}' """
-                                f"""has been blocked for URL '{url}'"""
-                            )
-
-                        return page_html
-
-            except IPBlockedError:
-                logger.warning(
-                    "IP '%s' has been blocked for URL '%s'. Marking as dead.",
-                    proxy_url or "Local IP",
-                    url,
+            # No proxy or an HTTP/HTTPS proxy. Use the main session.
+            if (proxy_url == "Local-IP") or proxy_url.startswith("http"):
+                return await self._make_request_and_validate(
+                    self._session, url, proxy_url
                 )
-                async with self._proxy_lock:
-                    self._dead_proxies.add(proxy_url)
-                raise
 
-            except asyncio.TimeoutError as e:
-                raise NetworkError(f"Request to '{url}' timed out") from e
+            # A new session with a SOCKS connector is required.
+            else:
+                connector = ProxyConnector.from_url(proxy_url)
+                async with aiohttp.ClientSession(
+                    connector=connector, headers=self._session.headers
+                ) as session:
+                    return await self._make_request_and_validate(
+                        session, url, proxy_url
+                    )
 
-            except (aiohttp.ClientError, aiohttp.ClientResponseError) as e:
-                status = getattr(e, "status", None)
-                proxy_info = proxy_url or "Local IP"
+    async def _make_request_and_validate(
+        self,
+        session: aiohttp.ClientSession,
+        url: str,
+        proxy_url: str,
+    ) -> str:
+        """Make a HTTP request and validate the response.
 
-                if status == HTTP_STATUSES["NOT_FOUND"]:
-                    raise ArtistNotFoundError(f"Artist not found at URL '{url}'") from e
-                elif status == HTTP_STATUSES["FORBIDDEN"]:
-                    raise IPBlockedError(
-                        f"IP {proxy_info} received 403 Forbidden for URL '{url}'"
-                    ) from e
+        Args:
+            session: The aiohttp client to make a HTTP request with.
+            url: The URL to make the HTTP request to.
+            proxy_url: The proxy to use for the HTTP request.
 
-                raise NetworkError(
-                    f"Network request to '{url}' failed: {e}", status=status
-                ) from e
+        Returns:
+            The text content of the HTTP response.
+
+        Raises:
+            NetworkError: If attempting to make a request fails.
+            IPBlockedError: If an IP has been blocked on the target website.
+        """
+        try:
+            if (proxy_url == "Local-IP") or proxy_url.startswith("http"):
+                proxy = None if proxy_url == "Local-IP" else proxy_url
+
+                async with session.get(
+                    url, proxy=proxy, timeout=self._timeout
+                ) as response:
+                    response.raise_for_status()
+                    page_html = await response.text()
+            else:
+                async with session.get(url, timeout=self._timeout) as response:
+                    response.raise_for_status()
+                    page_html = await response.text()
+
+            page_validity = self._validate_page_access(page_html)
+            if not page_validity:
+                raise IPBlockedError(f"{proxy_url} has been blocked on {url}")
+
+            return page_html
+
+        except IPBlockedError:
+            logger.warning(
+                "%s has been blocked on %s. Marking as dead.", proxy_url, url
+            )
+            async with self._proxy_lock:
+                self._dead_proxies.add(proxy_url)
+            raise
+
+        except asyncio.TimeoutError as e:
+            raise NetworkError(f"Request to {url} timed out") from e
+
+        except (aiohttp.ClientError, aiohttp.ClientResponseError) as e:
+            status = getattr(e, "status", None)
+
+            if status == HTTP_STATUSES["NOT_FOUND"]:
+                raise NetworkError(f"Page not found at {url}") from e
+            elif status == HTTP_STATUSES["FORBIDDEN"]:
+                raise IPBlockedError(f"{proxy_url} is forbidden from {url}") from e
+
+            raise NetworkError(
+                f"Network request to {url} failed: {e}", status=status
+            ) from e
 
     def _validate_page_access(self, page_html: str) -> bool:
         """Validate whether or not access to requested page was granted.

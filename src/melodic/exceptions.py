@@ -24,10 +24,6 @@ class SessionNotStartedError(NetworkError):
     """Raise when a network operation is attempted before starting a session."""
 
 
-class ArtistNotFoundError(NetworkError):
-    """Raise when an artist's page returns a 404 Not Found error."""
-
-
 class DiscographyNotFoundError(MelodicError):
     """Raise when an artist's discography page contains no track metadata."""
 
