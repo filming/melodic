@@ -6,17 +6,17 @@
   <a href="https://opensource.org/licenses/MIT"><img alt="License" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
 </p>
 
-Melodic is a Python client for fetching artist lyrical discographies. This library provides an asynchronous interface to retrieve complete artist discographies, including album metadata and song lyrics, with built-in database storage, proxy support, and robust error handling.
+Melodic is a Python client for fetching artist lyrical discographies. This library provides an asynchronous interface to retrieve complete artist discographies, including album and track metadata including lyrics, with built-in database storage, proxy support, and great error handling.
 
 ---
 
 ## Features
 
-- **Complete Discography Fetching:** Retrieves full album and track listings for any given artist.
+- **Complete Discography Fetching:** Retrieves full discography metadata and lyrics for any given artist.
 - **Asynchronous Interface:** Built with modern `async with` patterns for efficient, safe I/O operations.
-- **Database Storage:** Optional built-in storage system for organizing artist, album, and track metadata.
-- **Proxy Support:** Easily pass a list of proxies to route requests through.
-- **Robust Error Handling:** Comprehensive error handling and logging for reliable operation.
+- **Database Storage:** Optional built-in storage system for organizing artist, album, and track data.
+- **Proxy Support:** Easily pass a list of `HTTP` or `SOCKS` proxies to route requests through.
+- **Robust Error Handling:** Comprehensive error handling and logging for reliable operations.
 - **Modern Development Tools:** Includes ruff, mypy, pre-commit, and commitizen for high-quality code.
 
 ---
@@ -57,7 +57,6 @@ Pre-built wheel files are automatically generated and attached to each GitHub re
 3. Install using pip:
    ```bash
    pip install path/to/downloaded/melodic-*.whl
-   ```
 
 ---
 
@@ -67,53 +66,23 @@ Here's a basic example of how to use `melodic` to fetch the discography of an ar
 
 ```python
 import asyncio
-from melodic import Melodic, ClientConfig
+from melodic import Melodic
 
 async def main():
-    # Configure the client
-    config = ClientConfig(
-        storage_path="lyrics.db"      # Optional: Path to save the database
-    )
-
-    # Use the client as an asynchronous context manager
-    async with Melodic(config) as melodic:
-        # Fetch the discography for an artist
-        await melodic.get_discography("Taylor Swift")
+    async with Melodic(storage_path="lyrics.db") as melodic:
+        discography = await melodic.get_discography("Taylor Swift")
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-This script will fetch all albums and songs for Taylor Swift, retrieve the lyrics for each song, and store everything in a `lyrics.db` SQLite database if `storage_path` is provided.
-
-<details>
-<summary>Example Output</summary>
-
-```
-[2025-08-15 01:07:45] root                                INFO     [setup_logging:42] Logging configured. File level: None, Console level: DEBUG
-[2025-08-15 01:07:45] melodic.client                      INFO     [__init__:52] Melodic instance has been initialized.
-[2025-08-15 01:07:45] melodic.network.manager             DEBUG    [start_session:79] aiohttp.ClientSession started.
-[2025-08-15 01:07:45] melodic.storage.sqlite              DEBUG    [initialize:39] SQLite database initialized at devarea/lyrics.db.
-[2025-08-15 01:07:45] melodic.client                      DEBUG    [__aenter__:65] Melodic context entered and resources initialized.
-[2025-08-15 01:07:45] melodic.client                      INFO     [get_discography:101] Fetching discography for artist: 'taYLor   SwiFt'
-[2025-08-15 01:07:45] melodic.network.manager             DEBUG    [get:142] Requesting URL: https://www.azlyrics.com/t/taylorswift.html via proxy: http://45.201.11.3:3129
-[2025-08-15 01:07:45] melodic.client                      INFO     [get_discography:125] Processing song batch 1-20 of 468...
-...
-...
-[2025-08-15 01:08:22] melodic.storage.sqlite              INFO     [save_songs:74] Attempted to save 7 songs to the database.
-[2025-08-15 01:08:22] melodic.client                      INFO     [get_discography:144] Successfully fetched 396/468 song lyrics for 'taYLor   SwiFt'.
-[2025-08-15 01:08:22] melodic.network.manager             DEBUG    [close_session:86] aiohttp.ClientSession closed.
-[2025-08-15 01:08:22] melodic.storage.sqlite              DEBUG    [close:46] SQLite database connection closed.
-[2025-08-15 01:08:22] melodic.client                      DEBUG    [__aexit__:79] Melodic context exited and resources closed.
-```
-
-</details>
+This script will fetch the entire lyrical discography for `Taylor Swift` and will return it directly to the calling line in the form of a list of `Track` objects. It will also store the discography into a `lyrics.db` SQLite database if `storage_path` is provided. 
 
 ---
 
 ## Configuration
 
-Configuration is managed through the `ClientConfig` dataclass, which is passed to the `Melodic` client upon initialization.
+Configuration is managed through the `Melodic` client during initialization.
 
 - **`storage_path`**: `str | Path | None` (Default: `None`)
   - The file path where the SQLite database will be stored. If `None`, the database will be created in memory and will not be saved to disk.
@@ -124,15 +93,17 @@ Configuration is managed through the `ClientConfig` dataclass, which is passed t
 - **`max_concurrent_requests`**: `int` (Default: `10`)
   - The maximum number of concurrent `aiohttp` requests to make at one time.
 
+- **`max_retry_attempts`**: `int` (Default: 10)
+  -  The maximum amount of times to retry a failed fetch.
+
 - **`request_delay`**: `float` (Default: `3.5`)
-  - The cooldown period (in seconds) for a proxy after it has been used. This helps prevent rate-limiting.
+  - The cooldown period (in seconds) for a proxy after it has been used. This helps prevent rate-limiting. 
 
 - **`user_agent`**: `str | None` (Default: `None`)
   - A custom User-Agent string for network requests. If `None`, a default `aiohttp` User-Agent is used.
 
 - **`batch_save_size`**: `int` (Default: `20`)
-  - The number of songs to accumulate in memory before saving them to the database in a single transaction.
-
+  - The number of tracks to accumulate in memory before saving them to the database in a single transaction.
 
 ---
 
