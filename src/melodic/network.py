@@ -114,7 +114,7 @@ class NetworkManager:
 
                 # If no proxies are available right now, wait and retry
                 logger.debug("All live proxies are on cooldown, waiting to select one.")
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(1)
 
     async def get(self, url: str) -> str:
         """Perform an asynchronous GET request for the given URL.
