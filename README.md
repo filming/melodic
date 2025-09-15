@@ -72,9 +72,7 @@ from melodic import Melodic, ClientConfig
 async def main():
     # Configure the client
     config = ClientConfig(
-        storage_path="lyrics.db",      # Optional: Path to save the database
-        max_concurrent_requests=20,    # Optional: Max concurrent requests
-        request_delay=2.0,             # Optional: Delay between requests for a proxy
+        storage_path="lyrics.db"      # Optional: Path to save the database
     )
 
     # Use the client as an asynchronous context manager
@@ -123,7 +121,7 @@ Configuration is managed through the `ClientConfig` dataclass, which is passed t
 - **`proxies`**: `list[str] | None` (Default: `None`)
   - A list of proxy strings (e.g., `["http://user:pass@host:port"]`). If provided, all network requests will be rotated through these proxies.
 
-- **`max_concurrent_requests`**: `int` (Default: `10`)
+- **`max_concurrent_requests`**: `int` (Default: `1`)
   - The maximum number of concurrent `aiohttp` requests to make at one time.
 
 - **`request_delay`**: `float` (Default: `3.5`)

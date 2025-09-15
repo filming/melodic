@@ -5,21 +5,15 @@ build-backend = "hatchling.build"
 [project]
 name = "melodic"
 version = "2.2.0"
-description = "A Python client for fetching artist lyrical discographies."
+description = "An asynchronous client for fetching lyrical discographies of music artists."
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = [
-    "aiohttp>=3.12.15",
-    "aiohttp-socks>=0.10.1",
-    "aiosqlite>=0.21.0",
-    "beautifulsoup4>=4.13.4",
-    "lxml>=6.0.0",
-]
+dependencies = []
 license = {file = "LICENSE"}
 authors = [
     {name = "Filming"}
 ]
-keywords = ["python", "async", "web-scraping", "lyrics", "music", "azlyrics", "database", "discography", "artist-data"]
+keywords = ["python", "python3"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -44,7 +38,7 @@ src = ["src"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "PL", "B", "SIM", "C90", "D"]
-ignore = ["D203", "D213"]
+ignore = ["D100", "D104", "D203", "D213", "D413"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
@@ -75,11 +69,10 @@ update_changelog_on_bump = true
 change_type_map = { "feat" = "Added", "fix" = "Fixed", "perf" = "Changed", "refactor" = "Changed", "build" = "Changed", "ci" = "Changed", "docs" = "Documentation", "style" = "Changed", "test" = "Tests", "chore" = "Chores" }
 
 [project.optional-dependencies]
-
 dev = [
     "commitizen>=4.8.3",
     "mypy>=1.16.1",
     "pre-commit>=4.2.0",
     "ruff>=0.12.1",
-    "twine>=6.1.0"
+    "twine>=6.1.0",
 ]
