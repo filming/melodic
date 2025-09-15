@@ -22,6 +22,7 @@ class Melodic:
         storage_path: str | Path | None = None,
         proxies: list[str] | None = None,
         max_concurrent_requests: int = 10,
+        max_retry_attempts: int = 5,
         request_delay: float = 3.5,
         user_agent: str | None = None,
         batch_save_size: int = 20,
@@ -32,6 +33,7 @@ class Melodic:
             storage_path: The file path where the SQLite database will be stored.
             proxies: A list of proxy strings (e.g., "http://user:pass@host:port").
             max_concurrent_requests: The maximum number of concurrent requests.
+            max_retry_attempts: The maximum amount of times to retry a failed fetch.
             request_delay: The cooldown period for a proxy after it has been used.
             user_agent: A custom User-Agent string for network requests.
             batch_save_size: The number of songs to accumulate in memory before
@@ -45,6 +47,7 @@ class Melodic:
         )
         self._storage_manager = StorageManager(storage_path) if storage_path else None
         self._batch_save_size = batch_save_size
+        self._max_retry_attempts = max_retry_attempts
         self._in_context = False
 
         logger.info("Melodic instance has been initialized.")
@@ -150,27 +153,33 @@ class Melodic:
         Returns:
             A Track object if successful, otherwise None.
         """
-        try:
-            track_html = await self._network_manager.get(track_info.url)
-            lyrics = parse_track_page(track_html)
+        for i in range(self._max_retry_attempts):
+            try:
+                track_html = await self._network_manager.get(track_info.url)
+                lyrics = parse_track_page(track_html)
 
-            if not lyrics:
-                logger.warning(
-                    "Could not find lyrics for %s on %s",
-                    track_info.track_title,
-                    track_info.url,
+                if not lyrics:
+                    logger.warning(
+                        "Could not find lyrics for %s on %s. Retrying %s/%s",
+                        track_info.track_title,
+                        track_info.url,
+                        i + 1,
+                        3,
+                    )
+                return Track(
+                    artist_name=artist_name,
+                    album_title=track_info.album_title,
+                    track_title=track_info.track_title,
+                    lyrics=lyrics,
+                    url=track_info.url,
                 )
-                return None
+            except Exception as e:
+                logger.warning(
+                    "Failed to fetch lyrics for %s. Reason: %s. Retrying %s/%s",
+                    track_info.track_title,
+                    e,
+                    i + 1,
+                    3,
+                )
 
-            return Track(
-                artist_name=artist_name,
-                album_title=track_info.album_title,
-                track_title=track_info.track_title,
-                lyrics=lyrics,
-                url=track_info.url,
-            )
-        except Exception as e:
-            logger.warning(
-                "Failed to fetch lyrics for %s. Reason: %s", track_info.track_title, e
-            )
-            return None
+        return None
