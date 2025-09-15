@@ -1,8 +1,12 @@
+import asyncio
 import logging
 import types
 from pathlib import Path
 
+from .exceptions import SessionNotStartedError
+from .models import Track, TrackInfo
 from .network import NetworkManager
+from .parser import get_artist_url, parse_artist_page, parse_track_page
 from .storage import StorageManager
 
 logger = logging.getLogger(__name__)
@@ -72,3 +76,101 @@ class Melodic:
 
         self._in_context = False
         logger.debug("Melodic context exited.")
+
+    async def get_discography(self, artist_name: str) -> dict[str, list[Track]]:
+        """Fetch and process the complete lyrical discography for a given artist.
+
+        Args:
+            artist_name: The name of the artist.
+
+        Returns:
+            A dictionary mapping album names to lists of Track objects.
+
+        Raises:
+            SessionNotStartedError: If called outside of async context block.
+        """
+        if not self._in_context:
+            raise SessionNotStartedError(
+                "Class resources not initialized. Use an async with block."
+            )
+
+        logger.info("Fetching discography for %s", artist_name)
+        original_artist_name = artist_name
+
+        artist_url = get_artist_url(artist_name)
+        artist_page_html = await self._network_manager.get(artist_url)
+        artist_name, track_infos = parse_artist_page(artist_page_html)
+        logger.debug("Offical name for %s is %s", original_artist_name, artist_name)
+
+        track_count = len(track_infos)
+        tasks = [
+            asyncio.create_task(self._fetch_track_lyrics(artist_name, track_info))
+            for track_info in track_infos
+        ]
+        all_tracks = []
+
+        # Process tasks in chunks to save progress periodically
+        for i in range(0, len(tasks), self._batch_save_size):
+            chunk_tasks = tasks[i : i + self._batch_save_size]
+            logger.info(
+                "Processing track batch %d-%d of %d...",
+                i + 1,
+                min(i + self._batch_save_size, len(tasks)),
+                len(tasks),
+            )
+            results = await asyncio.gather(*chunk_tasks, return_exceptions=True)
+
+            chunk_tracks = [track for track in results if isinstance(track, Track)]
+            all_tracks.extend(chunk_tracks)
+
+            if self._storage_manager and chunk_tracks:
+                await self._storage_manager.save_tracks(chunk_tracks)
+
+        discography: dict[str, list[Track]] = {}
+        for track in all_tracks:
+            discography.setdefault(track.album_title, []).append(track)
+
+        logger.info(
+            "Successfully fetched %d/%d track lyrics for %s.",
+            len(all_tracks),
+            track_count,
+            artist_name,
+        )
+        return discography
+
+    async def _fetch_track_lyrics(
+        self, artist_name: str, track_info: TrackInfo
+    ) -> Track | None:
+        """Fetch, parse, and create a Track object.
+
+        Args:
+            artist_name: The name of the artist.
+            track_info: A TrackInfo to get the lyrics for.
+
+        Returns:
+            A Track object if successful, otherwise None.
+        """
+        try:
+            track_html = await self._network_manager.get(track_info.url)
+            lyrics = parse_track_page(track_html)
+
+            if not lyrics:
+                logger.warning(
+                    "Could not find lyrics for %s on %s",
+                    track_info.track_title,
+                    track_info.url,
+                )
+                return None
+
+            return Track(
+                artist_name=artist_name,
+                album_title=track_info.album_title,
+                track_title=track_info.track_title,
+                lyrics=lyrics,
+                url=track_info.url,
+            )
+        except Exception as e:
+            logger.warning(
+                "Failed to fetch lyrics for %s. Reason: %s", track_info.track_title, e
+            )
+            return None
